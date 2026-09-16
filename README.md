@@ -207,6 +207,8 @@ On each new browser session the app records the client IP (`x-forwarded-for` / `
 Without `DATABASE_URL`, serverless cannot persist PGLite files — only runtime logs are kept.
 
 - At most **one DB row per IP per hour** (dedupe).
+- **Geolocation** (country, region, city, lat/lon, org) via ipwho.is with geojs.io fallback; stored on `ip_logs` and logged as `[ip_geo]`.
+- Hosting/cloud IPs and bot user-agents are not written to the table.
 - Not shown in the product UI.
 
 ## Stack (for contributors)

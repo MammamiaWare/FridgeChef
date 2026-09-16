@@ -9,6 +9,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { dbSource, getSql } from "./db";
+import { lookupIpGeo, type IpGeo } from "./ip-geo";
 
 const DEDUPE_MINUTES = 60;
 
@@ -303,6 +304,36 @@ export const logVisit = createServerFn({ method: "POST" })
       return { ok: true, skipped: true, persisted: false, ip, reason: "hosting_or_bot" };
     }
 
+    let geo: IpGeo = {
+      country: null,
+      countryCode: null,
+      region: null,
+      city: null,
+      latitude: null,
+      longitude: null,
+      org: null,
+      timezone: null,
+      source: "none",
+    };
+    try {
+      geo = await lookupIpGeo(ip);
+    } catch (err) {
+      console.warn("[logVisit] geo", err);
+    }
+
+    console.info(
+      "[ip_geo]",
+      JSON.stringify({
+        ip,
+        country: geo.country,
+        countryCode: geo.countryCode,
+        region: geo.region,
+        city: geo.city,
+        org: geo.org,
+        source: geo.source,
+      }),
+    );
+
     if (dbSource !== "neon") {
       return {
         ok: true,
@@ -328,8 +359,16 @@ export const logVisit = createServerFn({ method: "POST" })
       }
 
       await sql`
-        insert into ip_logs (ip, user_agent, path, locale)
-        values (${ip}, ${userAgent}, ${path}, ${locale})
+        insert into ip_logs (
+          ip, user_agent, path, locale,
+          country, country_code, region, city,
+          latitude, longitude, org, timezone
+        )
+        values (
+          ${ip}, ${userAgent}, ${path}, ${locale},
+          ${geo.country}, ${geo.countryCode}, ${geo.region}, ${geo.city},
+          ${geo.latitude}, ${geo.longitude}, ${geo.org}, ${geo.timezone}
+        )
       `;
 
       return { ok: true, persisted: true, ip };
@@ -350,6 +389,14 @@ export type IpLogRow = {
   user_agent: string | null;
   path: string | null;
   locale: string | null;
+  country: string | null;
+  country_code: string | null;
+  region: string | null;
+  city: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  org: string | null;
+  timezone: string | null;
   created_at: string;
 };
 
@@ -368,7 +415,10 @@ export const listRecentIpLogs = createServerFn({ method: "GET" })
       const limit = Math.min(Math.max(Number(data.limit ?? 100), 1), 500);
       const sql = await getSql();
       const rows = await sql.query<IpLogRow>(
-        `select id, ip, user_agent, path, locale, created_at::text as created_at
+        `select id, ip, user_agent, path, locale,
+                country, country_code, region, city,
+                latitude, longitude, org, timezone,
+                created_at::text as created_at
          from ip_logs
          order by created_at desc
          limit $1`,
