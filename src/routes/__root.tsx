@@ -2,6 +2,7 @@ import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-r
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { PwaRegister } from "@/components/pwa-register";
+import { IpLogRegister } from "@/components/ip-log-register";
 import appCss from "../styles.css?url";
 
 const APP_NAME = "FridgeChef";
@@ -42,6 +43,7 @@ export const Route = createRootRoute({
       <body className="bg-bg text-fg antialiased">
         <PreviewHostBridge />
         <PwaRegister />
+        <IpLogRegister />
         <AuthProvider>
           <Outlet />
         </AuthProvider>

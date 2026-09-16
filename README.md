@@ -196,6 +196,15 @@ License: **MIT** — see [`LICENSE`](./LICENSE).
 
 ---
 
+
+## IP logging (Vercel)
+
+On each new browser session the app records the client IP (from `x-forwarded-for` / `x-real-ip`), user agent, path and locale in the `ip_logs` table (Neon when `DATABASE_URL` is set, otherwise local PGLite).
+
+- At most **one row per IP per hour** (dedupe).
+- Not shown in the product UI; query the database or call the server helper `listRecentIpLogs` in ops.
+- Requires a successful DB migration (`0002_ip_logs.sql` runs on `npm run build` / app start).
+
 ## Stack (for contributors)
 
 React 19 · TanStack Start / Router · Tailwind CSS v4 · Google Gemini (vision + text) · localStorage for shopping list and last 30 cooked dishes · PWA-ready static assets under `public/` · UI and classic cookbook localized for **Italian, English, Polish, Spanish, and Hindi**.
