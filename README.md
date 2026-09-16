@@ -199,11 +199,15 @@ License: **MIT** — see [`LICENSE`](./LICENSE).
 
 ## IP logging (Vercel)
 
-On each new browser session the app records the client IP (from `x-forwarded-for` / `x-real-ip`), user agent, path and locale in the `ip_logs` table (Neon when `DATABASE_URL` is set, otherwise local PGLite).
+On each new browser session the app records the client IP (`x-forwarded-for` / `x-real-ip`), user agent, path and locale.
 
-- At most **one row per IP per hour** (dedupe).
-- Not shown in the product UI; query the database or call the server helper `listRecentIpLogs` in ops.
-- Requires a successful DB migration (`0002_ip_logs.sql` runs on `npm run build` / app start).
+1. **Always** a structured line in **Vercel Runtime Logs**: `[ip_log] {"ip":"…","path":"…",…}`
+2. **Also** a row in Postgres table `ip_logs` when **`DATABASE_URL`** (Neon) is set on the Vercel project.
+
+Without `DATABASE_URL`, serverless cannot persist PGLite files — only runtime logs are kept.
+
+- At most **one DB row per IP per hour** (dedupe).
+- Not shown in the product UI.
 
 ## Stack (for contributors)
 

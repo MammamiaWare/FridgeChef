@@ -1,10 +1,13 @@
 /**
  * Log client IP addresses on the server (Vercel: x-forwarded-for / x-real-ip).
  * Called once per browser session from the client.
+ *
+ * - Always writes a structured line to server logs (Vercel Runtime Logs).
+ * - Also inserts into `ip_logs` when Postgres is available (DATABASE_URL / Neon).
  */
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
-import { getSql } from "./db";
+import { dbSource, getSql } from "./db";
 
 const DEDUPE_MINUTES = 60;
 
@@ -30,24 +33,43 @@ export type LogVisitInput = {
 export type LogVisitResult = {
   ok: boolean;
   skipped?: boolean;
+  persisted?: boolean;
   reason?: string;
+  ip?: string;
 };
 
 /**
- * Record a visit. Skips if the same IP was logged within the last hour
- * (limits noise from reloads / SPA navigation).
+ * Record a visit. Always emits a runtime log line.
+ * DB insert only when `DATABASE_URL` is set (Neon on Vercel).
  */
 export const logVisit = createServerFn({ method: "POST" })
-  .inputValidator((data: LogVisitInput) => data ?? {})
+  .validator((data: LogVisitInput) => data ?? {})
   .handler(async ({ data }): Promise<LogVisitResult> => {
-    try {
-      const req = getRequest();
-      const headers = req?.headers ?? new Headers();
-      const ip = clientIpFromHeaders(headers);
-      const userAgent = (headers.get("user-agent") ?? "").slice(0, 512) || null;
-      const path = (data.path ?? "/").slice(0, 512);
-      const locale = data.locale ? String(data.locale).slice(0, 16) : null;
+    const req = getRequest();
+    const headers = req?.headers ?? new Headers();
+    const ip = clientIpFromHeaders(headers);
+    const userAgent = (headers.get("user-agent") ?? "").slice(0, 512) || null;
+    const path = (data.path ?? "/").slice(0, 512);
+    const locale = data.locale ? String(data.locale).slice(0, 16) : null;
+    const at = new Date().toISOString();
 
+    // Always visible in Vercel → Deployments → Functions → Logs
+    console.info(
+      "[ip_log]",
+      JSON.stringify({ ip, path, locale, userAgent, at, db: dbSource }),
+    );
+
+    // Serverless Vercel without DATABASE_URL cannot use PGLite file storage.
+    if (dbSource !== "neon") {
+      return {
+        ok: true,
+        persisted: false,
+        ip,
+        reason: "runtime_log_only_no_DATABASE_URL",
+      };
+    }
+
+    try {
       const sql = await getSql();
 
       const recent = await sql.query<{ n: number }>(
@@ -59,7 +81,7 @@ export const logVisit = createServerFn({ method: "POST" })
       );
 
       if ((recent[0]?.n ?? 0) > 0) {
-        return { ok: true, skipped: true, reason: "deduped" };
+        return { ok: true, skipped: true, persisted: true, ip, reason: "deduped" };
       }
 
       await sql`
@@ -67,12 +89,14 @@ export const logVisit = createServerFn({ method: "POST" })
         values (${ip}, ${userAgent}, ${path}, ${locale})
       `;
 
-      return { ok: true };
+      return { ok: true, persisted: true, ip };
     } catch (err) {
-      console.error("[logVisit]", err);
+      console.error("[logVisit] db", err);
       return {
-        ok: false,
-        reason: err instanceof Error ? err.message : "log_failed",
+        ok: true,
+        persisted: false,
+        ip,
+        reason: err instanceof Error ? err.message : "db_insert_failed",
       };
     }
   });
@@ -86,10 +110,17 @@ export type IpLogRow = {
   created_at: string;
 };
 
-/** Recent rows for ops (server-only; not exposed in UI by default). */
+/** Recent rows from Postgres (requires DATABASE_URL). */
 export const listRecentIpLogs = createServerFn({ method: "GET" })
-  .inputValidator((data: { limit?: number } | undefined) => data ?? {})
+  .validator((data: { limit?: number } | undefined) => data ?? {})
   .handler(async ({ data }): Promise<{ ok: boolean; rows: IpLogRow[]; error?: string }> => {
+    if (dbSource !== "neon") {
+      return {
+        ok: false,
+        rows: [],
+        error: "DATABASE_URL not set — IP rows only in Vercel runtime logs ([ip_log])",
+      };
+    }
     try {
       const limit = Math.min(Math.max(Number(data.limit ?? 100), 1), 500);
       const sql = await getSql();
