@@ -10,6 +10,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { dbSource, getSql } from "./db";
 import { lookupIpGeo, type IpGeo } from "./ip-geo";
+import { deviceFromUserAgent } from "./device-from-ua";
 
 const DEDUPE_MINUTES = 60;
 
@@ -283,6 +284,7 @@ export const logVisit = createServerFn({ method: "POST" })
     const path = (data.path ?? "/").slice(0, 512);
     const locale = data.locale ? String(data.locale).slice(0, 16) : null;
     const at = new Date().toISOString();
+    const device = deviceFromUserAgent(userAgent);
     const filtered = shouldSkipVisitorLog(ip, userAgent);
 
     console.info(
@@ -292,6 +294,9 @@ export const logVisit = createServerFn({ method: "POST" })
         path,
         locale,
         userAgent,
+        deviceType: device.deviceType,
+        deviceOs: device.os,
+        deviceBrowser: device.browser,
         at,
         db: dbSource,
         filtered,
@@ -362,12 +367,14 @@ export const logVisit = createServerFn({ method: "POST" })
         insert into ip_logs (
           ip, user_agent, path, locale,
           country, country_code, region, city,
-          latitude, longitude, org, timezone
+          latitude, longitude, org, timezone,
+          device_type, device_os, device_browser
         )
         values (
           ${ip}, ${userAgent}, ${path}, ${locale},
           ${geo.country}, ${geo.countryCode}, ${geo.region}, ${geo.city},
-          ${geo.latitude}, ${geo.longitude}, ${geo.org}, ${geo.timezone}
+          ${geo.latitude}, ${geo.longitude}, ${geo.org}, ${geo.timezone},
+          ${device.deviceType}, ${device.os}, ${device.browser}
         )
       `;
 
@@ -397,6 +404,9 @@ export type IpLogRow = {
   longitude: number | null;
   org: string | null;
   timezone: string | null;
+  device_type: string | null;
+  device_os: string | null;
+  device_browser: string | null;
   created_at: string;
 };
 
@@ -418,6 +428,7 @@ export const listRecentIpLogs = createServerFn({ method: "GET" })
         `select id, ip, user_agent, path, locale,
                 country, country_code, region, city,
                 latitude, longitude, org, timezone,
+                device_type, device_os, device_browser,
                 created_at::text as created_at
          from ip_logs
          order by created_at desc
