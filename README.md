@@ -5,7 +5,7 @@
 </p>
 
 > **UPDATE — UPDATED VERSION**  
-> Multilingual UI (**IT · EN · PL · ES · HI**), flag language picker, localized classic cookbook, chef prompts, and photo → recipe flow. Clone or pull `main` for the latest release.  
+> Multilingual UI (**IT · EN · PL · ES · HI · AR · ZH**), flag language picker, localized classic cookbook, chef prompts, and photo → recipe flow. Clone or pull `main` for the latest release.  
 > **Try it now:** [https://frigo-chef-omega.vercel.app](https://frigo-chef-omega.vercel.app/)
 
 Photograph the inside of your fridge. Confirm the ingredients. Get recipes you can cook tonight — written in the style of an Italian home kitchen — or a shelf-by-shelf plan to store the food correctly.
@@ -18,7 +18,7 @@ For people who open the fridge, freeze for ten seconds, and still don’t know w
 
 [![Node](https://img.shields.io/badge/node-18%2B-blue)](https://nodejs.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
-[![Languages](https://img.shields.io/badge/UI-IT%20%7C%20EN%20%7C%20PL%20%7C%20ES%20%7C%20HI-informational)](#languages)
+[![Languages](https://img.shields.io/badge/UI-IT%20%7C%20EN%20%7C%20PL%20%7C%20ES%20%7C%20HI%20%7C%20AR%20%7C%20ZH-informational)](#languages)
 [![Live](https://img.shields.io/badge/live-frigo--chef--omega.vercel.app-success)](https://frigo-chef-omega.vercel.app/)
 
 ---
@@ -27,7 +27,7 @@ For people who open the fridge, freeze for ten seconds, and still don’t know w
 
 **Live app:** [https://frigo-chef-omega.vercel.app](https://frigo-chef-omega.vercel.app/)
 
-Open that link on your phone or desktop to use FridgeChef immediately (photo → recipes, classic cookbook, fridge organization, IT / EN / PL / ES / HI).
+Open that link on your phone or desktop to use FridgeChef immediately (photo → recipes, classic cookbook, fridge organization, IT / EN / PL / ES / HI / AR / ZH).
 
 > Note: `https://frigo-chef.vercel.app` is a **different** public project (French “Cuisine Intelligente”). This app’s production URL is **https://frigo-chef-omega.vercel.app**.
 
@@ -50,6 +50,8 @@ The app UI, AI chef prompts, error messages, and the classic cookbook text can b
 | 🇵🇱 | Polski |
 | 🇪🇸 | Español |
 | 🇮🇳 | हिन्दी (Hindi) |
+| 🇸🇦 | العربية (Arabic) |
+| 🇨🇳 | 中文 (Chinese) |
 
 Choice is saved in the browser (`localStorage`).
 
@@ -67,7 +69,7 @@ npm run dev
 
 Open [http://localhost:8080](http://localhost:8080).
 
-**Expected result:** the app loads, the language control shows the current flag (🇮🇹 / 🇬🇧 / 🇵🇱 / 🇪🇸), and the home screen offers **Take a photo** (or type ingredients by hand).
+**Expected result:** the app loads, the language control shows the current flag (🇮🇹 / 🇬🇧 / 🇵🇱 / 🇪🇸 / 🇮🇳 / 🇸🇦 / 🇨🇳), and the home screen offers **Take a photo** (or type ingredients by hand).
 
 Get a free Gemini key (type **auth**) from [Google AI Studio](https://aistudio.google.com/apikey).  
 Without a key, photo recognition is off — manual ingredients and the classic cookbook still work.
@@ -112,7 +114,7 @@ Type them on the home screen → **Go** → same three actions as after a photo.
 ### 3. Classic cookbook by category
 
 Open the **Recipes** tab. Expand categories (primi, secondi, eggs, sides, dessert).  
-Recipe text follows the selected language (IT / EN / PL / ES / HI).
+Recipe text follows the selected language (IT / EN / PL / ES / HI / AR / ZH).
 
 ### 4. Diet and time filters
 
@@ -196,8 +198,6 @@ License: **MIT** — see [`LICENSE`](./LICENSE).
 
 ---
 
-
-
 ## Stack (for contributors)
 
-React 19 · TanStack Start / Router · Tailwind CSS v4 · Google Gemini (vision + text) · localStorage for shopping list and last 30 cooked dishes · PWA-ready static assets under `public/` · UI and classic cookbook localized for **Italian, English, Polish, Spanish, and Hindi**.
+React 19 · TanStack Start / Router · Tailwind CSS v4 · Google Gemini (vision + text) · localStorage for shopping list and last 30 cooked dishes · PWA-ready static assets under `public/` · UI and classic cookbook localized for **Italian, English, Polish, Spanish, Hindi, Arabic, and Chinese**.
