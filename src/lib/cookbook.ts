@@ -10,6 +10,12 @@ import { RECIPES_CLASSIC } from "./recipes-classic";
 import { RECIPES_SECONDI } from "./recipes-secondi";
 import { RECIPES_PRIMI_DESSERT } from "./recipes-primi-dessert";
 
+/** Classic cookbook has en/pl/es/hi text; ar/zh fall back to English until full translations exist. */
+function recipeTextLocale(locale: Locale): "it" | "en" | "pl" | "es" | "hi" {
+  if (locale === "ar" || locale === "zh") return "en";
+  return locale;
+}
+
 export const FOOD_ART = {
   avocado: "/graphics/avocado.jpg",
   tomato: "/graphics/tomato.jpg",
@@ -124,7 +130,7 @@ function courseOk(recipe: BookRecipe, course: Prefs["course"]) {
 }
 
 function toRecipe(r: BookRecipe, servings: number, missing: string[], locale: Locale = "it"): Recipe {
-  const text = translateRecipeText(r.id, locale, {
+  const text = translateRecipeText(r.id, recipeTextLocale(locale), {
     title: r.title,
     description: r.description ?? "",
     ingredients: r.ingredients,
@@ -154,7 +160,7 @@ export function matchCookbook(haveRaw: string[], prefs: Prefs, locale: Locale = 
 
   const scored = pool
     .map((r) => {
-      const localized = translateRecipeText(r.id, locale, {
+      const localized = translateRecipeText(r.id, recipeTextLocale(locale), {
         title: r.title,
         description: r.description ?? "",
         ingredients: r.ingredients,
@@ -200,8 +206,6 @@ export function catalogBySection(prefs: Prefs, query = "", locale: Locale = "it"
   const q = query.trim().toLowerCase();
   const maxMin = prefs.diet === "fast" ? 15 : prefs.maxMinutes;
 
-  // Catalogo completo: non applica il filtro "solo dessert" così Primi e Dolci
-  // restano sempre consultabili nel tab Ricette.
   const filtered = BOOK.filter((r) => dietOk(r, prefs.diet))
     .filter((r) => r.minutes <= maxMin)
     .filter((r) => !q || r.title.toLowerCase().includes(q) || r.tags.some((t) => t.includes(q)));
@@ -274,16 +278,9 @@ export function sampleAnalysis(prefs: Prefs) {
   };
 }
 
-/**
- * Assegna la foto di copertina in base al titolo, con priorità dal tipo di
- * piatto più specifico (pasta/riso) fino alla verdura come ripiego generico —
- * così un ingrediente citato di sfuggita (es. "pomodoro" in un sugo di pasta)
- * non scavalca il tipo di piatto vero e proprio.
- */
 export function artForRecipe(title: string, fallback?: string) {
   const t = norm(title);
 
-  // 1) Primi/pasta e riso: parola del piatto, non dell'ingrediente.
   if (
     t.includes("pasta") ||
     t.includes("spaghett") ||
@@ -298,8 +295,6 @@ export function artForRecipe(title: string, fallback?: string) {
   )
     return FOOD_ART.pasta;
 
-  // 2) Dolci: controllato prima di uova/frittata per non perdere "omelette
-  // dolce" o "french toast dolce" a favore della foto delle uova.
   if (
     t.includes("tiramis") ||
     t.includes("mousse") ||
@@ -323,7 +318,6 @@ export function artForRecipe(title: string, fallback?: string) {
   )
     return FOOD_ART.tiramisu;
 
-  // 3) Secondi di carne.
   if (
     t.includes("pollo") ||
     t.includes("tacchino") ||
@@ -341,7 +335,6 @@ export function artForRecipe(title: string, fallback?: string) {
   )
     return FOOD_ART.steak;
 
-  // 4) Secondi di pesce.
   if (
     t.includes("tonno") ||
     t.includes("pesce") ||
@@ -358,9 +351,6 @@ export function artForRecipe(title: string, fallback?: string) {
   )
     return FOOD_ART.salmon;
 
-  // 5) Uova e frittate — parole generiche come "uova" sono sicure solo qui,
-  // perché i piatti dove l'uovo è un ingrediente secondario (pasta, carne)
-  // sono già stati intercettati sopra.
   if (
     t.includes("frittata") ||
     t.includes("omelette") ||
@@ -369,6 +359,5 @@ export function artForRecipe(title: string, fallback?: string) {
   )
     return FOOD_ART.egg;
 
-  // 6) Tutto il resto (contorni, insalate, verdure, antipasti) e ripiego finale.
   return FOOD_ART.vegetables || fallback;
 }
