@@ -39,6 +39,18 @@ Open that link on your phone or desktop to use FridgeChef immediately (photo →
 
 Manifest + service worker enable standalone mode. AI features need network and `GEMINI_API_KEY` on the server.
 
+### App-like experience by device (single codebase)
+
+FridgeChef is one web codebase that **adapts to the device**:
+
+| Device | Behaviour |
+|--------|-----------|
+| **Android** | Install prompt via Chrome `beforeinstallprompt`, home-screen icon, standalone display, safe-area padding |
+| **iPhone / iPad** | Safari “Add to Home Screen” guidance, black-translucent status bar, notch safe areas, no text selection in chrome when installed |
+| **Desktop** | Full browser UI; camera `capture` attribute omitted (file picker only) |
+
+Detection uses the browser User-Agent plus `display-mode: standalone` (`src/lib/device-from-ua.ts`, `src/lib/use-device.ts`). Bottom nav and install banner respect `env(safe-area-inset-*)` so the UI clears the home indicator on modern phones.
+
 ## Languages
 
 The app UI, AI chef prompts, error messages, and the classic cookbook text can be switched from the header language control (flag + fixed list — no free typing):
@@ -60,7 +72,7 @@ Choice is saved in the browser (`localStorage`).
 ## Quick start
 
 ```bash
-git clone https://github.com/Dariolex/FridgeChef.git
+git clone https://github.com/MammamiaWare/FridgeChef.git
 cd FridgeChef
 npm install
 export GEMINI_API_KEY=your_key_from_aistudio
@@ -135,7 +147,7 @@ Recipe text follows the selected language (IT / EN / PL / ES / HI / AR / ZH).
 **macOS / Linux / Windows (terminal)**
 
 ```bash
-git clone https://github.com/Dariolex/FridgeChef.git
+git clone https://github.com/MammamiaWare/FridgeChef.git
 cd FridgeChef
 npm install
 ```
@@ -200,4 +212,4 @@ License: **MIT** — see [`LICENSE`](./LICENSE).
 
 ## Stack (for contributors)
 
-React 19 · TanStack Start / Router · Tailwind CSS v4 · Google Gemini (vision + text) · localStorage for shopping list and last 30 cooked dishes · PWA-ready static assets under `public/` · UI and classic cookbook localized for **Italian, English, Polish, Spanish, Hindi, Arabic, and Chinese**.
+React 19 · TanStack Start / Router · Tailwind CSS v4 · Google Gemini (vision + text) · localStorage for shopping list and last 30 cooked dishes · PWA-ready static assets under `public/` · device-adaptive UI (`useDevice`, install banner) · UI and classic cookbook localized for **Italian, English, Polish, Spanish, Hindi, Arabic, and Chinese**.
