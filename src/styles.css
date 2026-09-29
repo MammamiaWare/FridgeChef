@@ -29,6 +29,26 @@
     color: var(--color-fg);
     font-family: var(--font-sans);
     min-height: 100%;
+    /* Avoid rubber-band overscroll showing white on iOS when installed */
+    overscroll-behavior-y: none;
+  }
+
+  /* Native-app feel when installed (standalone PWA) */
+  html[data-standalone="1"] body {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  html[data-standalone="1"] input,
+  html[data-standalone="1"] textarea {
+    user-select: text;
+    -webkit-user-select: text;
+  }
+
+  /* Android: contain overscroll glow */
+  html[data-platform="android"] body {
+    overscroll-behavior-y: contain;
   }
 
   img {
@@ -44,6 +64,14 @@
     inset 0 1px 0 color-mix(in oklab, var(--color-fg) 14%, transparent),
     0 18px 50px color-mix(in oklab, #000 35%, transparent);
   border: 1px solid color-mix(in oklab, var(--color-fg) 10%, transparent);
+}
+
+@utility safe-pb {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@utility safe-pt {
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 .food-float {
@@ -78,5 +106,12 @@
   .float-b,
   .float-c {
     animation: none;
+  }
+}
+
+/* Hide floating food art on very small phones to reduce clutter */
+@media (max-width: 360px) {
+  .food-float {
+    opacity: 0.2 !important;
   }
 }
